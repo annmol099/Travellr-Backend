@@ -15,7 +15,7 @@ from security.password_handler import PasswordHandler
 from security.jwt_handler import JWTHandler
 from infrastructure.database.models import UserModel
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
+auth_bp = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 
 # Initialize extensions (will be set by app)
 db = None

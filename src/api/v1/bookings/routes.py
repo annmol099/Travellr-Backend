@@ -6,12 +6,13 @@ from marshmallow import ValidationError
 import sys
 import os
 import uuid
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 from infrastructure.database.models import BookingModel, BookingStatus, UserModel
 
-bookings_bp = Blueprint("bookings", __name__, url_prefix="/bookings")
+bookings_bp = Blueprint("bookings", __name__, url_prefix="/api/v1/bookings")
 
 # Will be set by app
 db = None
@@ -45,13 +46,25 @@ def create_booking():
                 "status": "error"
             }), 404
         
+        # Convert trip_date string to datetime object
+        try:
+            if isinstance(data['trip_date'], str):
+                trip_date = datetime.fromisoformat(data['trip_date'].replace('Z', '+00:00'))
+            else:
+                trip_date = data['trip_date']
+        except Exception as e:
+            return jsonify({
+                "error": "Invalid trip_date format. Use ISO format: 2025-12-25T10:00:00",
+                "status": "error"
+            }), 400
+        
         # Create booking
         booking_id = str(uuid.uuid4())
         booking = BookingModel(
             id=booking_id,
             user_id=data['user_id'],
             vendor_id=data['vendor_id'],
-            trip_date=data['trip_date'],
+            trip_date=trip_date,
             total_price=data['total_price'],
             status=BookingStatus.PENDING
         )

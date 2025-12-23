@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirna
 
 from infrastructure.database.models import PaymentModel, BookingModel
 
-payments_bp = Blueprint("payments", __name__, url_prefix="/payments")
+payments_bp = Blueprint("payments", __name__, url_prefix="/api/v1/payments")
 
 # Will be set by app
 db = None
