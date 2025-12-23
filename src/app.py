@@ -40,56 +40,69 @@ def create_app(config_name: str = "development") -> Flask:
         algorithm=app.config['JWT_ALGORITHM']
     )
     
-    # Create database tables
     with app.app_context():
-        from infrastructure.database.models import Base
+        # Create database tables
         Base.metadata.create_all(db.engine)
-    
-    # Debug route
-    @app.route("/", methods=["GET"])
-    def health_check():
-        return {"status": "Server is running", "message": "Welcome to Travellr API"}, 200
-    
-    # Register blueprints
-    try:
-        from api.v1.auth.routes import auth_bp, init_auth
-        init_auth(db, jwt_handler)
-        app.register_blueprint(auth_bp, url_prefix="/api/v1")
-        print("✓ Auth routes registered")
-    except Exception as e:
-        print(f"✗ Auth routes failed: {e}")
-    
-    try:
-        from api.v1.users.routes import users_bp, init_users
-        init_users(db)
-        app.register_blueprint(users_bp, url_prefix="/api/v1")
-        print("✓ Users routes registered")
-    except Exception as e:
-        print(f"✗ Users routes failed: {e}")
-    
-    try:
-        from api.v1.bookings.routes import bookings_bp, init_bookings
-        init_bookings(db)
-        app.register_blueprint(bookings_bp, url_prefix="/api/v1")
-        print("✓ Bookings routes registered")
-    except Exception as e:
-        print(f"✗ Bookings routes failed: {e}")
-    
-    try:
-        from api.v1.payments.routes import payments_bp, init_payments
-        init_payments(db)
-        app.register_blueprint(payments_bp, url_prefix="/api/v1")
-        print("✓ Payments routes registered")
-    except Exception as e:
-        print(f"✗ Payments routes failed: {e}")
-    
-    try:
-        from api.v1.admin.routes import admin_bp, init_admin
-        init_admin(db)
-        app.register_blueprint(admin_bp, url_prefix="/api/v1")
-        print("✓ Admin routes registered")
-    except Exception as e:
-        print(f"✗ Admin routes failed: {e}")
+        
+        # Health check route
+        @app.route("/", methods=["GET"])
+        def health_check():
+            return {"status": "Server is running", "message": "Welcome to Travellr API"}, 200
+        
+        # Register Auth Blueprint
+        try:
+            from api.v1.auth.routes import auth_bp, init_auth
+            init_auth(db, jwt_handler)
+            app.register_blueprint(auth_bp)
+            print("✓ Auth routes registered")
+        except Exception as e:
+            print(f"✗ Auth routes failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        
+        # Register Users Blueprint
+        try:
+            from api.v1.users.routes import users_bp, init_users
+            init_users(db)
+            app.register_blueprint(users_bp)
+            print("✓ Users routes registered")
+        except Exception as e:
+            print(f"✗ Users routes failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        
+        # Register Bookings Blueprint
+        try:
+            from api.v1.bookings.routes import bookings_bp, init_bookings
+            init_bookings(db)
+            app.register_blueprint(bookings_bp)
+            print("✓ Bookings routes registered")
+        except Exception as e:
+            print(f"✗ Bookings routes failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        
+        # Register Payments Blueprint
+        try:
+            from api.v1.payments.routes import payments_bp, init_payments
+            init_payments(db)
+            app.register_blueprint(payments_bp)
+            print("✓ Payments routes registered")
+        except Exception as e:
+            print(f"✗ Payments routes failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        
+        # Register Admin Blueprint
+        try:
+            from api.v1.admin.routes import admin_bp, init_admin
+            init_admin(db)
+            app.register_blueprint(admin_bp)
+            print("✓ Admin routes registered")
+        except Exception as e:
+            print(f"✗ Admin routes failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
     
     # Error handlers
     @app.errorhandler(404)

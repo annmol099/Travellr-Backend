@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirna
 
 from infrastructure.database.models import UserModel
 
-users_bp = Blueprint("users", __name__, url_prefix="/users")
+users_bp = Blueprint("users", __name__, url_prefix="/api/v1/users")
 
 # Will be set by app
 db = None
