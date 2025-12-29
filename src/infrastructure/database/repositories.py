@@ -3,7 +3,7 @@ Repository implementations for database access.
 """
 from typing import Optional, List
 from sqlalchemy.exc import SQLAlchemyError
-from src.infrastructure.database.models import UserModel, BookingModel, PaymentModel
+from src.infrastructure.database.models import UserModel, BookingModel, PaymentModel, VendorModel, TripModel
 
 
 class UserRepository:
@@ -287,3 +287,189 @@ class PaymentRepository:
             return float(result or 0)
         except SQLAlchemyError as e:
             raise ValueError(f"Failed to sum payments: {str(e)}")
+
+
+class VendorRepository:
+    """Repository for Vendor entities."""
+    
+    def __init__(self, session):
+        self.session = session
+    
+    def save(self, vendor: VendorModel) -> VendorModel:
+        """Save a vendor to the database."""
+        try:
+            self.session.add(vendor)
+            self.session.commit()
+            self.session.refresh(vendor)
+            return vendor
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise ValueError(f"Failed to save vendor: {str(e)}")
+    
+    def find_by_id(self, vendor_id: str) -> Optional[VendorModel]:
+        """Find a vendor by ID."""
+        try:
+            return self.session.query(VendorModel).filter(
+                VendorModel.id == vendor_id
+            ).first()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to find vendor: {str(e)}")
+    
+    def find_by_email(self, email: str) -> Optional[VendorModel]:
+        """Find a vendor by email."""
+        try:
+            return self.session.query(VendorModel).filter(
+                VendorModel.email == email.lower()
+            ).first()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to find vendor: {str(e)}")
+    
+    def find_all(self, page: int = 1, limit: int = 10) -> tuple:
+        """Find all vendors with pagination."""
+        try:
+            offset = (page - 1) * limit
+            vendors = self.session.query(VendorModel).offset(offset).limit(limit).all()
+            total = self.session.query(VendorModel).count()
+            return vendors, total
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to find vendors: {str(e)}")
+    
+    def find_pending(self) -> List[VendorModel]:
+        """Find all pending vendors."""
+        try:
+            from src.infrastructure.database.models import VendorStatus
+            return self.session.query(VendorModel).filter(
+                VendorModel.status == VendorStatus.PENDING
+            ).all()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to find pending vendors: {str(e)}")
+    
+    def find_by_status(self, status: str) -> List[VendorModel]:
+        """Find vendors by status."""
+        try:
+            from src.infrastructure.database.models import VendorStatus
+            return self.session.query(VendorModel).filter(
+                VendorModel.status == VendorStatus[status.upper()]
+            ).all()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to find vendors by status: {str(e)}")
+    
+    def update(self, vendor_id: str, **kwargs) -> Optional[VendorModel]:
+        """Update a vendor."""
+        try:
+            vendor = self.find_by_id(vendor_id)
+            if not vendor:
+                return None
+            
+            for key, value in kwargs.items():
+                if hasattr(vendor, key):
+                    setattr(vendor, key, value)
+            
+            self.session.commit()
+            self.session.refresh(vendor)
+            return vendor
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise ValueError(f"Failed to update vendor: {str(e)}")
+    
+    def delete(self, vendor_id: str) -> bool:
+        """Delete a vendor."""
+        try:
+            vendor = self.find_by_id(vendor_id)
+            if not vendor:
+                return False
+            
+            self.session.delete(vendor)
+            self.session.commit()
+            return True
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise ValueError(f"Failed to delete vendor: {str(e)}")
+    
+    def exists(self, email: str) -> bool:
+        """Check if vendor exists by email."""
+        try:
+            return self.session.query(VendorModel).filter(
+                VendorModel.email == email.lower()
+            ).first() is not None
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to check vendor existence: {str(e)}")
+
+
+class TripRepository:
+    """Repository for Trip entities."""
+    
+    def __init__(self, session):
+        self.session = session
+    
+    def save(self, trip: TripModel) -> TripModel:
+        """Save a trip to the database."""
+        try:
+            self.session.add(trip)
+            self.session.commit()
+            self.session.refresh(trip)
+            return trip
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise ValueError(f"Failed to save trip: {str(e)}")
+    
+    def find_by_id(self, trip_id: str) -> Optional[TripModel]:
+        """Find a trip by ID."""
+        try:
+            return self.session.query(TripModel).filter(
+                TripModel.id == trip_id
+            ).first()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to find trip: {str(e)}")
+    
+    def find_by_vendor(self, vendor_id: str) -> List[TripModel]:
+        """Find all trips by vendor."""
+        try:
+            return self.session.query(TripModel).filter(
+                TripModel.vendor_id == vendor_id
+            ).all()
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to find trips: {str(e)}")
+    
+    def find_all(self, page: int = 1, limit: int = 10) -> tuple:
+        """Find all trips with pagination."""
+        try:
+            offset = (page - 1) * limit
+            trips = self.session.query(TripModel).offset(offset).limit(limit).all()
+            total = self.session.query(TripModel).count()
+            return trips, total
+        except SQLAlchemyError as e:
+            raise ValueError(f"Failed to find trips: {str(e)}")
+    
+    def update(self, trip_id: str, **kwargs) -> Optional[TripModel]:
+        """Update a trip."""
+        try:
+            trip = self.find_by_id(trip_id)
+            if not trip:
+                return None
+            
+            for key, value in kwargs.items():
+                if hasattr(trip, key):
+                    setattr(trip, key, value)
+            
+            self.session.commit()
+            self.session.refresh(trip)
+            return trip
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise ValueError(f"Failed to update trip: {str(e)}")
+    
+    def delete(self, trip_id: str) -> bool:
+        """Delete a trip."""
+        try:
+            trip = self.find_by_id(trip_id)
+            if not trip:
+                return False
+            
+            self.session.delete(trip)
+            self.session.commit()
+            return True
+        except SQLAlchemyError as e:
+            self.session.rollback()
+            raise ValueError(f"Failed to delete trip: {str(e)}")
+

@@ -103,6 +103,26 @@ def create_app(config_name: str = "development") -> Flask:
             print(f"✗ Admin routes failed: {str(e)}")
             import traceback
             traceback.print_exc()
+        
+        # Register Vendors Blueprint
+        try:
+            from api.v1.vendors.routes import vendors_bp
+            app.register_blueprint(vendors_bp)
+            print("✓ Vendors routes registered")
+        except Exception as e:
+            print(f"✗ Vendors routes failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+        
+        # Register Trips Blueprint
+        try:
+            from api.v1.trips.routes import trips_bp
+            app.register_blueprint(trips_bp)
+            print("✓ Trips routes registered")
+        except Exception as e:
+            print(f"✗ Trips routes failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
     
     # Error handlers
     @app.errorhandler(404)

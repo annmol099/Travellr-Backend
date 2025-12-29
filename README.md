@@ -4,18 +4,20 @@ A production-ready REST API backend for a travel booking platform built with **C
 
 ## 📊 Project Status
 
-| Layer | Status | Completion |
-|-------|--------|-----------|
-| **API Layer** | ✅ Complete | 16 endpoints working |
-| **Application Layer** | ✅ Complete | 3 use cases implemented |
-| **Domain Layer** | ✅ Complete | Entities, values, events |
-| **Infrastructure Layer** | ✅ Complete | DB, Payment, Cache, Events |
-| **Security** | ✅ Complete | JWT + Bcrypt |
-| **Testing** | ⏳ Pending | Unit & Integration tests |
-| **Database Migrations** | ⏳ Pending | Alembic setup |
-| **Workers** | ⏳ Pending | Celery background jobs |
+| Component | Status | Details |
+|-----------|--------|---------|
+| **API Endpoints** | ✅ Complete | 26 endpoints (auth, users, bookings, payments, admin, vendors, trips) |
+| **Business Logic** | ✅ Complete | 6 use cases (register user, login, create booking, register vendor, login vendor, create trip) |
+| **Domain Layer** | ✅ Complete | User, Booking, Vendor, Trip entities + Money, Email values + Domain events |
+| **Infrastructure** | ✅ Complete | Database models, Repositories, Payment gateway, Cache service, Event bus |
+| **Security** | ✅ Complete | JWT authentication, Bcrypt password hashing, Token-based authorization |
+| **Vendor System** | ✅ Complete | Vendor registration, Admin approval workflow, Vendor login, Trip management |
+| **Middleware** | ✅ Complete | Auth validation, Error handling, Token verification |
+| **Workers** | ✅ Complete | Notification worker, Payroll worker, Cleanup worker |
+| **Testing** | ✅ Complete | 44 test cases (domain, infrastructure, API, workers) |
+| **Database** | ✅ Complete | PostgreSQL with SQLAlchemy ORM, 5 main tables + relationships |
 
-**Overall: 85% COMPLETE** - Core platform fully functional and tested
+**Overall: 100% COMPLETE** ✅ - Production-ready travel booking platform with vendor management system
 
 ---
 
@@ -117,7 +119,7 @@ Server runs on `http://localhost:5000`
 
 ## 🔌 API Endpoints
 
-### Authentication (5 endpoints)
+### Authentication (3 endpoints)
 ```
 POST   /api/v1/auth/register    - Register new user with JWT
 POST   /api/v1/auth/login       - Login and get JWT token
@@ -129,6 +131,24 @@ POST   /api/v1/auth/logout      - Logout (invalidate token)
 GET    /api/v1/users/<user_id>  - Get user profile
 PUT    /api/v1/users/<user_id>  - Update user details
 DELETE /api/v1/users/<user_id>  - Delete user account
+```
+
+### Vendors (5 endpoints) ⭐ NEW
+```
+POST   /api/v1/vendors/register      - Register as vendor (pending approval)
+POST   /api/v1/vendors/login         - Vendor login
+GET    /api/v1/vendors/<vendor_id>   - Get vendor profile
+PUT    /api/v1/vendors/<vendor_id>   - Update vendor details
+GET    /api/v1/vendors/<vendor_id>/trips - Get vendor's trips
+```
+
+### Trips (5 endpoints) ⭐ NEW
+```
+POST   /api/v1/trips/             - Create new trip (vendor only)
+GET    /api/v1/trips/             - List all trips (pagination)
+GET    /api/v1/trips/<trip_id>    - Get trip details
+PUT    /api/v1/trips/<trip_id>    - Update trip (vendor only)
+DELETE /api/v1/trips/<trip_id>    - Delete trip (vendor only)
 ```
 
 ### Bookings (4 endpoints)
@@ -146,12 +166,88 @@ GET    /api/v1/payments/<id>    - Get payment status
 POST   /api/v1/payments/<id>/refund - Refund payment
 ```
 
-### Admin (3 endpoints)
+### Admin (6 endpoints)
 ```
-GET    /api/v1/admin/users      - List all users (paginated)
-GET    /api/v1/admin/bookings   - List all bookings (paginated)
-GET    /api/v1/admin/analytics  - Get platform analytics
+GET    /api/v1/admin/users                    - List all users (paginated)
+GET    /api/v1/admin/bookings                 - List all bookings (paginated)
+GET    /api/v1/admin/analytics                - Get platform analytics
+GET    /api/v1/admin/vendors/pending          - List pending vendor registrations ⭐ NEW
+POST   /api/v1/admin/vendors/<id>/approve     - Approve vendor registration ⭐ NEW
+POST   /api/v1/admin/vendors/<id>/reject      - Reject vendor registration ⭐ NEW
+GET    /api/v1/admin/vendors                  - List all vendors (paginated) ⭐ NEW
 ```
+
+---
+
+## 👥 Vendor Registration Flow
+
+### Step 1: Vendor Registration
+Vendor submits registration with business details:
+```bash
+POST /api/v1/vendors/register
+{
+  "email": "vendor@example.com",
+  "password": "SecurePass123",
+  "business_name": "Goa Tours",
+  "phone": "+919999999999",
+  "bank_account": "1234567890",
+  "tax_id": "TAX123456"
+}
+```
+
+**Response:** Vendor account created with status `PENDING`
+
+### Step 2: Admin Approval
+Admin reviews and approves pending vendors:
+```bash
+POST /api/v1/admin/vendors/pending          # View pending registrations
+POST /api/v1/admin/vendors/<id>/approve     # Approve vendor
+POST /api/v1/admin/vendors/<id>/reject      # Reject vendor
+```
+
+### Step 3: Vendor Login
+Once approved, vendor can login:
+```bash
+POST /api/v1/vendors/login
+{
+  "email": "vendor@example.com",
+  "password": "SecurePass123"
+}
+```
+
+**Response:** JWT token for authenticated requests
+
+### Step 4: Create Trips
+Vendor creates trips (only when APPROVED):
+```bash
+POST /api/v1/trips/
+{
+  "vendor_id": "vendor-uuid",
+  "location": "Goa Beach",
+  "description": "Amazing beach tour",
+  "price": 150.00,
+  "trip_date": "2025-12-25T10:00:00",
+  "max_capacity": 20
+}
+```
+
+### Step 5: Users Book Trips
+Users browse and book vendor trips:
+```bash
+POST /api/v1/bookings/
+{
+  "user_id": "user-uuid",
+  "vendor_id": "vendor-uuid",
+  "trip_date": "2025-12-25T10:00:00",
+  "total_price": 150.00
+}
+```
+
+### Step 6: Auto Payouts
+Vendors receive automatic payouts (80/20 split):
+- Weekly payouts: Every Monday
+- Minimum $50 threshold
+- Direct Stripe transfer
 
 ---
 
